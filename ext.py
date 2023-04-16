@@ -14,16 +14,6 @@ import sys
 #     else:
 #         return 3
 
-# def getTopApps(user_event_dict):
-#     app_dict = dict()
-#     for app in user_event_dict:
-#         for event_type in app:
-#             for event in app[event_type]:
-#                 app_dict[app[event_type][event]] = app_dict.get(app[event_type][event], 0) + 1
-
-#     app_dict = {k: v for k, v in sorted(app_dict.items(), key=lambda item: item[1], reverse=True)}
-#     return app_dict
-
 def listToXY(series):
     # start = series[0] // 60000
     start = 0
@@ -52,51 +42,85 @@ data = f.read()
 
 data2 = json.loads(data)
 
-def getEvents(datas, types):
+def getEvents(datas, types, range = []):
     result = list()
 
     for data in datas:
         for t in types:
             result += list(data.get(sys.argv[1], dict()).get("events", dict()).get(sys.argv[2], dict()).get(t, dict()).values())
 
+    if len(range) > 0:
+        
+        if range[0] == -1:
+            range[0] = min(result)
+
+        if range[1] == -1:
+            range[1] = max(result)
+        
+        result = [r for r in result if r >= range[0] and r <= range[1]]
+
     return result
 
-launches = getEvents([data1, data2], ["Launched", "Notif clicked"])
-scrolls = getEvents([data1, data2], ["Scrolled"])
-clicks = getEvents([data1, data2], ["Clicked"])
-notifs = getEvents([data1, data2], ["Notif received"])
-
-
-# axes = plt.subplot()
-# axes.set_xticks([0, 1, 2, 3])
-# axes.set_xticklabels(["Morning", "Afternoon", "Evening", "Night"])
-
-f1, x1, y1 = listToXY(notifs)
-f2, x2, y2 = listToXY(clicks)
-print(len(x1), len(x2))
-y1 = [250 for y in y1]
-# print(x1)
-
-t = 0
-result = dict()
-
-while t < len(x1):
+def getTopApps(user = sys.argv[1]):
+    app_dict = dict()
+    data = [data1, data2]
     
-    for i in range(15):
-        result[x1[t]] = result.get(x1[t], 0) + f2.get(x1[t] + i, 0)
+    for d in data:
+        for app_k, app_v in d[user]["events"].items():
+            for type_k, type_v in app_v.items():
+                for event in type_v:
+                    app_dict[app_k] = app_dict.get(app_k, 0) + 1
+    
+    app_dict = {k: v for k, v in sorted(app_dict.items(), key=lambda item: item[1], reverse=True)}
+    return app_dict
 
-    t = t + 1
+def getTopEvents(user = sys.argv[1]):
+    app_dict = dict()
+    data = [data1, data2]
+    
+    for d in data:
+        for app_k, app_v in d[user]["events"].items():
+            for type_k, type_v in app_v.items():
+                for event in type_v:
+                    app_dict[type_k] = app_dict.get(type_k, 0) + 1
+    
+    app_dict = {k: v for k, v in sorted(app_dict.items(), key=lambda item: item[1], reverse=True)}
+    return app_dict
 
-X = list(result.keys())
-Y = list(result.values())
-
-plt.bar(x1, y1, color = "yellow", width=20)
-# plt.bar(x2, y2, color = "blue", width=1)
-plt.plot(x2, y2, color = "blue", marker = 'o')
-plt.plot(X, Y, color = "red", marker = 'o')
-# plt.scatter(x1, y1)
-plt.show()
+# launches = getEvents([data1, data2], ["Launched", "Notif clicked"])
+# scrolls = getEvents([data1, data2], ["Scrolled"])
+# clicks = getEvents([data1, data2], ["Clicked"])
+# notifs = getEvents([data1, data2], ["Notif received"])
 
 
+# # axes = plt.subplot()
+# # axes.set_xticks([0, 1, 2, 3])
+# # axes.set_xticklabels(["Morning", "Afternoon", "Evening", "Night"])
 
+# f1, x1, y1 = listToXY(notifs)
+# f2, x2, y2 = listToXY(clicks)
+# print(len(x1), len(x2))
+# y1 = [250 for y in y1]
+# # print(x1)
 
+# t = 0
+# result = dict()
+
+# while t < len(x1):
+    
+#     for i in range(15):
+#         result[x1[t]] = result.get(x1[t], 0) + f2.get(x1[t] + i, 0)
+
+#     t = t + 1
+
+# X = list(result.keys())
+# Y = list(result.values())
+
+# plt.bar(x1, y1, color = "yellow", width=20)
+# # plt.bar(x2, y2, color = "blue", width=1)
+# plt.plot(x2, y2, color = "blue", marker = 'o')
+# plt.plot(X, Y, color = "red", marker = 'o')
+# # plt.scatter(x1, y1)
+# plt.show()
+print(getTopApps())
+print(getTopEvents())
